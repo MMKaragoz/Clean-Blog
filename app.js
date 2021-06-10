@@ -2,6 +2,10 @@ const express = require('express');
 const mongoose = require('mongoose');
 const ejs = require('ejs');
 const Posts = require('./models/Posts');
+const methodOverride = require('method-override');
+const pageRoute = require('./routes/pageRoute');
+const postRoute = require('./routes/postRoute');
+
 const app = express();
 
 mongoose.connect('mongodb://localhost/cleanblog-test-db', {
@@ -9,42 +13,22 @@ mongoose.connect('mongodb://localhost/cleanblog-test-db', {
   useUnifiedTopology: true,
 });
 
+// Middlewares
 app.set('view engine', 'ejs');
-
+app.use(
+  methodOverride('_method', {
+    methods: ['POST', 'GET'],
+  })
+);
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-app.get('/', async (req, res) => {
-  const posts = await Posts.find({});
-  res.render('index', {
-    posts,
-  });
-});
+// Routes
+app.use('/', pageRoute);
+app.use('/posts', postRoute);
 
-app.get('/about', (req, res) => {
-  res.render('about');
-});
-
-app.get('/add_post', (req, res) => {
-  res.render('add_post');
-});
-
-app.post('/posts', async (req, res) => {
-  await Posts.create(req.body);
-  // await console.log(req.body);
-  res.redirect('/');
-});
-
-app.get('/posts/:id', async (req, res) => {
-  // console.log(req.params.id);
-  const post = await Posts.findById(req.params.id);
-  res.render('post', {
-    post,
-  });
-});
-
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server started on port: ${PORT}.`);
 });
